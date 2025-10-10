@@ -1,0 +1,167 @@
+{% extends 'image_editor/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center">
+    <!-- Tarjeta principal -->
+    <div class="upload-card">
+        <!-- Header con icono -->
+        <div class="upload-header">
+            <div class="upload-icon">
+                <i class="fas fa-image"></i>
+            </div>
+            <h1 class="upload-title">{{ message }}</h1>
+            <p class="upload-subtitle">{{ instruction }}</p>
+        </div>
+        
+        <!-- Área de drag & drop -->
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-content">
+                <i class="fas fa-cloud-upload-alt upload-icon-large"></i>
+                <p class="upload-text">Arrastre y suelte su imagen aquí</p>
+                <p class="upload-or">o</p>
+                <button class="btn-choose" id="chooseBtn">
+                    Elegir Imagen
+                </button>
+            </div>
+        </div>
+        
+        <!-- Información de archivos soportados -->
+        <div class="upload-info">
+            <p>Soporta {{ supported_formats|join:", " }} hasta {{ max_size }}</p>
+        </div>
+        
+        <!-- Input oculto para seleccionar archivos -->
+        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        
+        <!-- CSRF Token -->
+        {% csrf_token %}
+    </div>
+</div>
+
+<script>
+function goToEditor() {
+    // Redirigir al editor
+    window.location.href = "{% url 'image_editor:editor' %}";
+}
+
+function uploadImageAndGoToEditor(file) {
+    if (!file.type.startsWith('image/')) {
+        alert('Por favor selecciona un archivo de imagen válido');
+        return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) { // 10MB
+        alert('El archivo es demasiado grande. Máximo 10MB');
+        return;
+    }
+    
+    // Mostrar indicador de carga
+    showLoadingIndicator();
+    
+    // Crear FormData para enviar la imagen
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    // Subir la imagen al servidor
+    fetch('{% url "image_editor:upload" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCSRFToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoadingIndicator();
+        if (data.success) {
+            console.log('Imagen subida exitosamente');
+            // Redirigir al editor
+            window.location.href = "{% url 'image_editor:editor' %}";
+        } else {
+            console.error('Error al subir imagen:', data.error);
+            alert('Error al subir la imagen: ' + data.error);
+        }
+    })
+    .catch(error => {
+        hideLoadingIndicator();
+        console.error('Error:', error);
+        alert('Error al subir la imagen');
+    });
+}
+
+function showLoadingIndicator() {
+    const uploadArea = document.getElementById('uploadArea');
+    if (uploadArea) {
+        uploadArea.classList.add('loading');
+        uploadArea.style.pointerEvents = 'none';
+    }
+}
+
+function hideLoadingIndicator() {
+    const uploadArea = document.getElementById('uploadArea');
+    if (uploadArea) {
+        uploadArea.classList.remove('loading');
+        uploadArea.style.pointerEvents = 'auto';
+    }
+}
+
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+// Configurar drag & drop y botón
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const chooseBtn = document.getElementById('chooseBtn');
+    
+    // Configurar botón "Elegir Imagen"
+    if (chooseBtn && fileInput) {
+        chooseBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            fileInput.click();
+        });
+    }
+    
+    // Configurar área de drag & drop
+    if (uploadArea) {
+        uploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                uploadImageAndGoToEditor(files[0]);
+            }
+        });
+    }
+    
+    // Configurar input de archivo
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                uploadImageAndGoToEditor(this.files[0]);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

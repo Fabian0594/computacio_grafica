@@ -1,0 +1,404 @@
+{% extends 'image_editor/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="editor-container">
+    <!-- Header -->
+    <header class="editor-header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon">IM</div>
+                <span class="logo-text">Image Editor</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="btn-icon" title="Vista de Cuadrícula">
+                <i class="fas fa-th"></i>
+            </button>
+            <button class="btn-new" id="newImageBtn" title="Nueva Imagen">
+                <i class="fas fa-upload"></i>
+                Nueva Imagen
+            </button>
+            <button class="btn-icon" title="Ayuda">
+                <i class="fas fa-question"></i>
+            </button>
+            <button class="btn-download" id="downloadBtn" title="Descargar">
+                <i class="fas fa-download"></i>
+                Descargar
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="editor-main">
+        <!-- Canvas Area -->
+        <div class="canvas-area">
+            <div class="canvas-container">
+                <div class="image-preview" id="imagePreview">
+                    {% if current_image %}
+                        <img src="{{ current_image }}" alt="{{ image_name }}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                    {% else %}
+                        <div class="placeholder-text">
+                            <i class="fas fa-image"></i>
+                            <p>No hay imagen cargada</p>
+                            <button class="btn-new" id="loadImageBtn" style="margin-top: 1rem;">
+                                <i class="fas fa-upload"></i>
+                                Cargar Imagen
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="editor-sidebar">
+            <!-- Tabs -->
+            <div class="sidebar-tabs">
+                <button class="tab-btn active" data-tab="basic">
+                    <i class="fas fa-sliders-h"></i>
+                    Básicos
+                </button>
+                <button class="tab-btn" data-tab="effects">
+                    <i class="fas fa-magic"></i>
+                    Efectos
+                </button>
+                <button class="tab-btn" data-tab="layers">
+                    <i class="fas fa-layer-group"></i>
+                    Capas
+                </button>
+                <button class="tab-btn" data-tab="fusion">
+                    <i class="fas fa-images"></i>
+                    Fusión
+                </button>
+                <button class="tab-btn" data-tab="histogram">
+                    <i class="fas fa-chart-bar"></i>
+                    Histograma
+                </button>
+                <button class="tab-btn" data-tab="transform">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                    Transformar
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Basic Adjustments Tab -->
+                <div class="tab-panel active" id="basic">
+                    <h3>Ajustes Básicos</h3>
+                    
+                    <!-- Global Brightness -->
+                    <div class="filter-group">
+                        <label class="filter-label">
+                            Brillo Global: <span id="globalBrightnessValue">100%</span>
+                        </label>
+                        <input type="range" class="filter-slider" id="globalBrightnessSlider" 
+                               min="0" max="200" value="100">
+                    </div>
+
+                    <!-- Channel Brightness -->
+                    <div class="filter-group">
+                        <h4>Brillo por Canal</h4>
+                        <div class="channel-controls">
+                            <div class="channel-group">
+                                <label class="filter-label">
+                                    Rojo: <span id="redBrightnessValue">100%</span>
+                                </label>
+                                <input type="range" class="filter-slider" id="redBrightnessSlider" 
+                                       min="0" max="200" value="100">
+                            </div>
+                            <div class="channel-group">
+                                <label class="filter-label">
+                                    Verde: <span id="greenBrightnessValue">100%</span>
+                                </label>
+                                <input type="range" class="filter-slider" id="greenBrightnessSlider" 
+                                       min="0" max="200" value="100">
+                            </div>
+                            <div class="channel-group">
+                                <label class="filter-label">
+                                    Azul: <span id="blueBrightnessValue">100%</span>
+                                </label>
+                                <input type="range" class="filter-slider" id="blueBrightnessSlider" 
+                                       min="0" max="200" value="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contrast -->
+                    <div class="filter-group">
+                        <h4>Contraste</h4>
+                        <div class="contrast-controls">
+                            <div class="contrast-group">
+                                <label class="filter-label">
+                                    Logarítmico: <span id="logContrastValue">0%</span>
+                                </label>
+                                <input type="range" class="filter-slider" id="logContrastSlider" 
+                                       min="0" max="100" value="0">
+                            </div>
+                            <div class="contrast-group">
+                                <label class="filter-label">
+                                    Exponencial: <span id="expContrastValue">0%</span>
+                                </label>
+                                <input type="range" class="filter-slider" id="expContrastSlider" 
+                                       min="0" max="100" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Effects Tab -->
+                <div class="tab-panel" id="effects">
+                    <h3>Efectos</h3>
+                    
+                    <!-- Grayscale -->
+                    <div class="filter-group">
+                        <div class="effect-control">
+                            <input type="checkbox" id="grayscaleCheck" class="effect-checkbox">
+                            <label class="filter-label">Escala de Grises</label>
+                        </div>
+                    </div>
+
+                    <!-- Negative -->
+                    <div class="filter-group">
+                        <div class="effect-control">
+                            <input type="checkbox" id="negativeCheck" class="effect-checkbox">
+                            <label class="filter-label">Foto Negativa</label>
+                        </div>
+                    </div>
+
+                    <!-- Binarization -->
+                    <div class="filter-group">
+                        <div class="effect-control">
+                            <input type="checkbox" id="binaryCheck" class="effect-checkbox">
+                            <label class="filter-label">Binarización</label>
+                        </div>
+                        <div class="binary-controls" id="binaryControls" style="display: none;">
+                            <label class="filter-label">
+                                Umbral: <span id="thresholdValue">128</span>
+                            </label>
+                            <input type="range" class="filter-slider" id="thresholdSlider" 
+                                   min="0" max="255" value="128">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transform Tab -->
+                <div class="tab-panel" id="transform">
+                    <h3>Transformaciones</h3>
+                    
+                    <!-- Crop -->
+                    <div class="filter-group">
+                        <h4>Recorte</h4>
+                        <div class="crop-controls">
+                            <div class="crop-inputs">
+                                <div class="input-group">
+                                    <label>X:</label>
+                                    <input type="number" id="cropX" value="0" min="0">
+                                </div>
+                                <div class="input-group">
+                                    <label>Y:</label>
+                                    <input type="number" id="cropY" value="0" min="0">
+                                </div>
+                                <div class="input-group">
+                                    <label>Ancho:</label>
+                                    <input type="number" id="cropWidth" value="100" min="1">
+                                </div>
+                                <div class="input-group">
+                                    <label>Alto:</label>
+                                    <input type="number" id="cropHeight" value="100" min="1">
+                                </div>
+                            </div>
+                            <button class="btn-apply" id="applyCropBtn">Aplicar Recorte</button>
+                        </div>
+                    </div>
+
+                    <!-- Zoom -->
+                    <div class="filter-group">
+                        <h4>Zoom</h4>
+                        <div class="zoom-controls">
+                            <label class="filter-label">
+                                Factor: <span id="zoomValue">1.0x</span>
+                            </label>
+                            <input type="range" class="filter-slider" id="zoomSlider" 
+                                   min="0.1" max="5" step="0.1" value="1">
+                            <button class="btn-apply" id="applyZoomBtn">Aplicar Zoom</button>
+                        </div>
+                    </div>
+
+                    <!-- Rotation -->
+                    <div class="filter-group">
+                        <h4>Rotación</h4>
+                        <div class="rotation-controls">
+                            <label class="filter-label">
+                                Ángulo: <span id="rotationValue">0°</span>
+                            </label>
+                            <input type="range" class="filter-slider" id="rotationSlider" 
+                                   min="-180" max="180" value="0">
+                            <button class="btn-apply" id="applyRotationBtn">Aplicar Rotación</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Effects Tab -->
+                <div class="tab-panel" id="effects">
+                    <h3>Efectos</h3>
+                    
+                    <!-- Grayscale -->
+                    <div class="filter-group">
+                        <div class="effect-control">
+                            <input type="checkbox" id="grayscaleCheck" class="effect-checkbox">
+                            <label class="filter-label">Escala de Grises</label>
+                        </div>
+                    </div>
+
+                    <!-- Negative -->
+                    <div class="filter-group">
+                        <div class="effect-control">
+                            <input type="checkbox" id="negativeCheck" class="effect-checkbox">
+                            <label class="filter-label">Foto Negativa</label>
+                        </div>
+                    </div>
+
+                    <!-- Binarization -->
+                    <div class="filter-group">
+                        <div class="effect-control">
+                            <input type="checkbox" id="binaryCheck" class="effect-checkbox">
+                            <label class="filter-label">Binarización</label>
+                        </div>
+                        <div class="binary-controls" id="binaryControls" style="display: none;">
+                            <label class="filter-label">
+                                Umbral: <span id="thresholdValue">128</span>
+                            </label>
+                            <input type="range" class="filter-slider" id="thresholdSlider" 
+                                   min="0" max="255" value="128">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Layers Tab -->
+                <div class="tab-panel" id="layers">
+                    <h3>Capas</h3>
+                    
+                    <!-- RGB Layers -->
+                    <div class="filter-group">
+                        <h4>Extracción RGB</h4>
+                        <div class="layer-buttons">
+                            <button class="layer-btn" id="extractRedBtn">Capa Roja</button>
+                            <button class="layer-btn" id="extractGreenBtn">Capa Verde</button>
+                            <button class="layer-btn" id="extractBlueBtn">Capa Azul</button>
+                        </div>
+                    </div>
+
+                    <!-- CMYK Layers -->
+                    <div class="filter-group">
+                        <h4>Extracción CMYK</h4>
+                        <div class="layer-buttons">
+                            <button class="layer-btn" id="extractCyanBtn">Capa Cian</button>
+                            <button class="layer-btn" id="extractMagentaBtn">Capa Magenta</button>
+                            <button class="layer-btn" id="extractYellowBtn">Capa Amarilla</button>
+                            <button class="layer-btn" id="extractBlackBtn">Capa Negra</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fusion Tab -->
+                <div class="tab-panel" id="fusion">
+                    <h3>Fusión de Imágenes</h3>
+                    
+                    <!-- Image Selection -->
+                    <div class="filter-group">
+                        <h4>Selección de Imágenes</h4>
+                        <div class="image-selection">
+                            <div class="image-slot">
+                                <label>Imagen 1:</label>
+                                <input type="file" id="image1Input" accept="image/*">
+                                <div class="image-preview" id="image1Preview"></div>
+                            </div>
+                            <div class="image-slot">
+                                <label>Imagen 2:</label>
+                                <input type="file" id="image2Input" accept="image/*">
+                                <div class="image-preview" id="image2Preview"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fusion Type -->
+                    <div class="filter-group">
+                        <h4>Tipo de Fusión</h4>
+                        <div class="fusion-controls">
+                            <button class="fusion-btn" id="normalFusionBtn">Fusión Normal</button>
+                            <button class="fusion-btn" id="equalizedFusionBtn">Fusión Ecualizada</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Histogram Tab -->
+                <div class="tab-panel" id="histogram">
+                    <h3>Histograma</h3>
+                    
+                    <div class="filter-group">
+                        <button class="btn-apply" id="showHistogramBtn">Mostrar Histograma</button>
+                        <div class="histogram-container" id="histogramContainer" style="display: none;">
+                            <canvas id="histogramCanvas" width="300" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Transform Section -->
+            <div class="transform-section">
+                <h3>Transformar</h3>
+                <div class="transform-buttons">
+                    <button class="transform-btn" id="rotateLeft">
+                        <i class="fas fa-undo"></i>
+                        Rotar
+                    </button>
+                    <button class="transform-btn" id="rotateRight">
+                        <i class="fas fa-redo"></i>
+                        Rotar
+                    </button>
+                    <button class="transform-btn" id="flipH">
+                        <i class="fas fa-arrows-alt-h"></i>
+                        Voltear H
+                    </button>
+                    <button class="transform-btn" id="flipV">
+                        <i class="fas fa-arrows-alt-v"></i>
+                        Voltear V
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reset Button -->
+            <div class="reset-section">
+                <button class="btn-reset" id="resetAllBtn">
+                    <i class="fas fa-undo"></i>
+                    Restablecer Todo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden file input -->
+<input type="file" id="fileInput" accept="image/*" style="display: none;">
+
+<!-- CSRF Token -->
+{% csrf_token %}
+
+<!-- JavaScript -->
+<script src="{% static 'js/editor.js' %}"></script>
+<script>
+// Manejar botón de cargar imagen
+document.addEventListener('DOMContentLoaded', function() {
+    const loadImageBtn = document.getElementById('loadImageBtn');
+    if (loadImageBtn) {
+        loadImageBtn.addEventListener('click', function() {
+            window.location.href = '{% url "image_editor:home" %}';
+        });
+    }
+});
+</script>
+{% endblock %}
